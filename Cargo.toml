@@ -1,0 +1,21 @@
+[package]
+name = "lazyfinder"
+version = "0.1.5"
+edition = "2021"
+
+[dependencies]
+regex = { version = "1.10.4", default-features = false, features = ["std", "perf", "unicode-case", "unicode-perl"] }
+pico-args = "0.5.0"
+colored = "2.1.0"
+memchr = "2.7.2"
+memmap2 = "0.9.4"
+ignore = "0.4.22"
+crossterm = { version = "0.27.0", default-features = false }
+ctrlc = "3.4.4"
+
+[profile.release]
+opt-level = "z"     # 针对体积优化
+lto = true          # 链接时优化
+codegen-units = 1   # 提高优化质量
+panic = "abort"     # 减小错误处理的开销
+strip = true        # 去除符号表

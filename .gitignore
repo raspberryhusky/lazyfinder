@@ -1,0 +1,20 @@
+# 编译输出目录
+target/
+
+# 测试和运行日志文件
+find.log
+*.log
+
+# 操作系统自动生成的文件
+.DS_Store
+Thumbs.db
+
+# IDE 和编辑器配置文件
+.idea/
+.vscode/
+*.swp
+*.iml
+
+# 性能分析或调试文件
+test_regex.rs
+test_regex

@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+jobs:
+  build:
+    name: Build Release Binaries
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        include:
+          - os: ubuntu-latest
+            target: x86_64-unknown-linux-gnu
+            name: lazyfinder-linux-amd64
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            name: lazyfinder-windows-amd64.exe
+          - os: macos-latest
+            target: x86_64-apple-darwin
+            name: lazyfinder-macos-amd64
+          - os: macos-latest
+            target: aarch64-apple-darwin
+            name: lazyfinder-macos-arm64
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          target: ${{ matrix.target }}
+          profile: minimal
+          override: true
+
+      - name: Build release
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --release --target ${{ matrix.target }}
+
+      - name: Install UPX
+        uses: crazy-max/ghaction-upx@v2
+        with:
+          install-only: true
+
+      - name: Rename and compress binary
+        run: |
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            mv target/${{ matrix.target }}/release/lazyfinder.exe target/${{ matrix.target }}/release/${{ matrix.name }}
+            upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}
+          else
+            mv target/${{ matrix.target }}/release/lazyfinder target/${{ matrix.target }}/release/${{ matrix.name }}
+            # macOS aarch64 上 UPX 存在兼容性问题，仅针对非 macOS-arm64 使用
+            if [ "${{ matrix.target }}" != "aarch64-apple-darwin" ]; then
+              upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }} || true
+            fi
+          fi
+        shell: bash
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: ${{ matrix.name }}
+          path: target/${{ matrix.target }}/release/${{ matrix.name }}
+
+  release:
+    name: Create GitHub Release
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v3
+        with:
+          path: artifacts
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: artifacts/**/*
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
