@@ -5,6 +5,7 @@ use std::io::{self, Write};
 use std::process;
 use std::time::Instant;
 
+use lazyfinder::i18n::strings::*;
 use lazyfinder::scanner;
 use lazyfinder::sensitive;
 use lazyfinder::ui::{CliReporter, CursorGuard};
@@ -19,19 +20,19 @@ fn main() {
 
     // 处理帮助信息
     if args.contains(["-h", "--help"]) {
-        println!("lazyfinder - 快速查询，极致性能");
-        println!("用法:");
-        println!("  lazyfinder -d <目录> -p <文件名前缀> -k <关键字> [-r] [-c <扩写字符数>] [-o <输出文件>] [--stdout] [--sensitive] [-i]");
-        println!("\n选项:");
-        println!("  -d, --dir      查询文件目标目录");
-        println!("  -p, --pre      指定文件名中包含的关键字 (逗号分隔)");
-        println!("  -k, --keys     指定文件内容包含的关键字 (逗号分隔，正则模式下为单个正则)");
-        println!("  -r, --reg      是否启用正则模式");
-        println!("  -c, --context  扩写选项，显示匹配内容前后的字符，默认 10 个字符");
-        println!("  -o, --output   指定结果输出文件 (默认保存至当前目录下的 find.log)");
-        println!("      --stdout   禁用文件输出，将所有结果直接打印到当前终端");
-        println!("  -s, --sensitive 开启内置的敏感信息扫描模式 (将自动应用内置的敏感正则规则与文件后缀)");
-        println!("  -i, --ignore   是否忽略常见的无意义目录 (如 node_modules, target, .git 等)，默认不忽略");
+        println!("{}", HELP_TITLE);
+        println!("{}", HELP_USAGE);
+        println!("{}", HELP_USAGE_LINE);
+        println!("{}", HELP_OPTIONS);
+        println!("{}", HELP_OPT_DIR);
+        println!("{}", HELP_OPT_PRE);
+        println!("{}", HELP_OPT_KEYS);
+        println!("{}", HELP_OPT_REG);
+        println!("{}", HELP_OPT_CTX);
+        println!("{}", HELP_OPT_OUT);
+        println!("{}", HELP_OPT_STDOUT);
+        println!("{}", HELP_OPT_SENS);
+        println!("{}", HELP_OPT_IGN);
         process::exit(0);
     }
 
@@ -39,7 +40,7 @@ fn main() {
     let ignore_dirs = args.contains(["-i", "--ignore"]);
 
     let dir: String = args.value_from_str(["-d", "--dir"]).unwrap_or_else(|_| {
-        eprintln!("错误: 缺少 -d / --dir 参数");
+        eprintln!("{}", ERR_MISSING_DIR);
         process::exit(1);
     });
 
@@ -47,7 +48,7 @@ fn main() {
         if is_sensitive {
             String::new() // 敏感模式下允许为空
         } else {
-            eprintln!("错误: 缺少 -p / --pre 参数");
+            eprintln!("{}", ERR_MISSING_PRE);
             process::exit(1);
         }
     });
@@ -56,7 +57,7 @@ fn main() {
         if is_sensitive {
             String::new() // 敏感模式下允许为空
         } else {
-            eprintln!("错误: 缺少 -k / --keys 参数");
+            eprintln!("{}", ERR_MISSING_KEYS);
             process::exit(1);
         }
     });
@@ -121,7 +122,7 @@ fn main() {
                 process::exit(0);
             }
         }
-        eprintln!("错误: {}", e);
+        eprintln!("{}: {}", ERR_PREFIX, e);
         process::exit(1);
     }
 
@@ -130,24 +131,34 @@ fn main() {
         let _ = reporter.draw_ui(true);
         // 往下移动光标避免覆盖
         let _ = execute!(io::stdout(), cursor::MoveDown(1), cursor::MoveToColumn(0));
-        println!("\n{} 扫描完成！共扫描了 {} 个文件，发现匹配: {} 处，耗时: {:.2?}", 
+        println!("\n{} {} {} {}, {}: {} {}, {}: {:.2?}", 
             "✔".green(), 
+            RES_DONE,
             reporter.scanned_count.to_string().yellow(), 
+            RES_FILES,
+            RES_MATCHES,
             reporter.match_count.to_string().red(),
+            RES_MATCHES_SUFFIX,
+            RES_TIME,
             start.elapsed()
         );
         if reporter.match_count > 0 {
             if let Some(p) = saved_path {
-                println!("{} 结果已保存至: {}", "💾".blue(), p.display());
+                println!("{} {}: {}", "💾".blue(), RES_SAVED, p.display());
             }
         } else {
-            println!("{} 未发现任何匹配项，未生成日志文件。", "ℹ".cyan());
+            println!("{} {}", "ℹ".cyan(), RES_NO_MATCH);
         }
     } else {
-        if let Err(_) = writeln!(io::stdout(), "\n{} 扫描完成！共扫描了 {} 个文件，发现匹配: {} 处，耗时: {:.2?}", 
+        if let Err(_) = writeln!(io::stdout(), "\n{} {} {} {}, {}: {} {}, {}: {:.2?}", 
             "✔".green(), 
+            RES_DONE,
             reporter.scanned_count.to_string().yellow(), 
+            RES_FILES,
+            RES_MATCHES,
             reporter.match_count.to_string().red(),
+            RES_MATCHES_SUFFIX,
+            RES_TIME,
             start.elapsed()
         ) {
             process::exit(0);

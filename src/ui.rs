@@ -10,6 +10,7 @@ use std::io::{self, Write};
 use std::time::{Duration, Instant};
 
 use crate::utils::truncate_to_width;
+use crate::i18n::strings::*;
 
 pub struct CursorGuard;
 impl Drop for CursorGuard {
@@ -75,8 +76,8 @@ impl CliReporter {
             cursor::MoveToColumn(0),
         )?;
 
-        queue!(self.stdout, Clear(ClearType::UntilNewLine), Print(format!("{} {}", "[LazyFinder]".green().bold(), "正在扫描...".cyan())), cursor::MoveDown(1), cursor::MoveToColumn(0))?;
-        queue!(self.stdout, Clear(ClearType::UntilNewLine), Print(format!("已扫描文件数: {} | 发现匹配数: {}", self.scanned_count.to_string().yellow(), self.match_count.to_string().red())), cursor::MoveDown(1), cursor::MoveToColumn(0))?;
+        queue!(self.stdout, Clear(ClearType::UntilNewLine), Print(format!("{} {}", "[LazyFinder]".green().bold(), UI_SCANNING.cyan())), cursor::MoveDown(1), cursor::MoveToColumn(0))?;
+        queue!(self.stdout, Clear(ClearType::UntilNewLine), Print(format!("{}: {} | {}: {}", UI_SCANNED_FILES, self.scanned_count.to_string().yellow(), UI_FOUND_MATCHES, self.match_count.to_string().red())), cursor::MoveDown(1), cursor::MoveToColumn(0))?;
         
         let max_file_len = term_width.saturating_sub(15).max(10);
         let display_file = if self.current_file.len() > max_file_len {
@@ -84,7 +85,7 @@ impl CliReporter {
         } else {
             self.current_file.clone()
         };
-        queue!(self.stdout, Clear(ClearType::UntilNewLine), Print(format!("当前文件: {}", display_file)), cursor::MoveDown(1), cursor::MoveToColumn(0))?;
+        queue!(self.stdout, Clear(ClearType::UntilNewLine), Print(format!("{}: {}", UI_CURRENT_FILE, display_file)), cursor::MoveDown(1), cursor::MoveToColumn(0))?;
         
         let sep = "-".repeat(term_width.min(80));
         queue!(self.stdout, Clear(ClearType::UntilNewLine), Print(sep.dimmed()), cursor::MoveDown(1), cursor::MoveToColumn(0))?;

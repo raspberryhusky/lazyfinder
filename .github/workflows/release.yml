@@ -37,36 +37,47 @@ jobs:
           profile: minimal
           override: true
 
-      - name: Build release
-        uses: actions-rs/cargo@v1
-        with:
-          command: build
-          args: --release --target ${{ matrix.target }}
-
       - name: Install UPX
         uses: crazy-max/ghaction-upx@v3
         with:
           install-only: true
 
-      - name: Rename and compress binary
+      - name: Build and Compress (English)
         run: |
+          cargo build --release --target ${{ matrix.target }}
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
-            mv target/${{ matrix.target }}/release/lazyfinder.exe target/${{ matrix.target }}/release/${{ matrix.name }}
-            upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}
+            mv target/${{ matrix.target }}/release/lazyfinder.exe target/${{ matrix.target }}/release/${{ matrix.name }}-en.exe
+            upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-en.exe || true
           else
-            mv target/${{ matrix.target }}/release/lazyfinder target/${{ matrix.target }}/release/${{ matrix.name }}
-            # macOS aarch64 上 UPX 存在兼容性问题，仅针对非 macOS-arm64 使用
+            mv target/${{ matrix.target }}/release/lazyfinder target/${{ matrix.target }}/release/${{ matrix.name }}-en
             if [ "${{ matrix.target }}" != "aarch64-apple-darwin" ]; then
-              upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }} || true
+              upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-en || true
             fi
           fi
         shell: bash
 
-      - name: Upload artifact
+      - name: Build and Compress (Chinese)
+        run: |
+          cargo clean
+          cargo build --release --target ${{ matrix.target }} --no-default-features --features i18n-zh
+          if [ "${{ matrix.os }}" = "windows-latest" ]; then
+            mv target/${{ matrix.target }}/release/lazyfinder.exe target/${{ matrix.target }}/release/${{ matrix.name }}-zh.exe
+            upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-zh.exe || true
+          else
+            mv target/${{ matrix.target }}/release/lazyfinder target/${{ matrix.target }}/release/${{ matrix.name }}-zh
+            if [ "${{ matrix.target }}" != "aarch64-apple-darwin" ]; then
+              upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-zh || true
+            fi
+          fi
+        shell: bash
+
+      - name: Upload artifacts
         uses: actions/upload-artifact@v4
         with:
-          name: ${{ matrix.name }}
-          path: target/${{ matrix.target }}/release/${{ matrix.name }}
+          name: ${{ matrix.name }}-binaries
+          path: |
+            target/${{ matrix.target }}/release/${{ matrix.name }}-en*
+            target/${{ matrix.target }}/release/${{ matrix.name }}-zh*
 
   release:
     name: Create GitHub Release
