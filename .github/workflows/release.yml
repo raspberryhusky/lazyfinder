@@ -10,6 +10,7 @@ jobs:
     name: Build Release Binaries
     runs-on: ${{ matrix.os }}
     strategy:
+      fail-fast: false
       matrix:
         include:
           - os: ubuntu-latest
@@ -38,6 +39,7 @@ jobs:
           override: true
 
       - name: Install UPX
+        if: runner.os != 'macOS'
         uses: crazy-max/ghaction-upx@v3
         with:
           install-only: true
@@ -48,11 +50,12 @@ jobs:
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             mv target/${{ matrix.target }}/release/lazyfinder.exe target/${{ matrix.target }}/release/${{ matrix.name }}-en.exe
             upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-en.exe || true
-          else
+          elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             mv target/${{ matrix.target }}/release/lazyfinder target/${{ matrix.target }}/release/${{ matrix.name }}-en
-            if [ "${{ matrix.target }}" != "aarch64-apple-darwin" ]; then
-              upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-en || true
-            fi
+            upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-en || true
+          else
+            # macOS 不使用 UPX
+            mv target/${{ matrix.target }}/release/lazyfinder target/${{ matrix.target }}/release/${{ matrix.name }}-en
           fi
         shell: bash
 
@@ -63,11 +66,12 @@ jobs:
           if [ "${{ matrix.os }}" = "windows-latest" ]; then
             mv target/${{ matrix.target }}/release/lazyfinder.exe target/${{ matrix.target }}/release/${{ matrix.name }}-zh.exe
             upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-zh.exe || true
-          else
+          elif [ "${{ matrix.os }}" = "ubuntu-latest" ]; then
             mv target/${{ matrix.target }}/release/lazyfinder target/${{ matrix.target }}/release/${{ matrix.name }}-zh
-            if [ "${{ matrix.target }}" != "aarch64-apple-darwin" ]; then
-              upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-zh || true
-            fi
+            upx --best --lzma target/${{ matrix.target }}/release/${{ matrix.name }}-zh || true
+          else
+            # macOS 不使用 UPX
+            mv target/${{ matrix.target }}/release/lazyfinder target/${{ matrix.target }}/release/${{ matrix.name }}-zh
           fi
         shell: bash
 
