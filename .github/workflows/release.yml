@@ -44,6 +44,15 @@ jobs:
         with:
           install-only: true
 
+      - name: Update Cargo.toml version
+        run: |
+          # 提取 tag 名字 (例如把 refs/tags/v0.2.5 变成 0.2.5)
+          VERSION=${GITHUB_REF#refs/tags/v}
+          echo "Updating Cargo.toml version to $VERSION"
+          # 用 sed 替换 Cargo.toml 中的版本号
+          sed -i.bak -e "s/^version = \".*\"/version = \"$VERSION\"/" Cargo.toml
+        shell: bash
+
       - name: Build and Compress (English)
         run: |
           cargo build --release --target ${{ matrix.target }}

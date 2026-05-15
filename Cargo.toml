@@ -15,7 +15,7 @@ colored = "2.1.0"
 memchr = "2.7.2"
 memmap2 = "0.9.4"
 ignore = "0.4.22"
-crossterm = { version = "0.27.0", default-features = false }
+crossterm = { version = "0.27.0", default-features = false, features = ["windows"] }
 ctrlc = "3.4.4"
 
 [profile.release]
